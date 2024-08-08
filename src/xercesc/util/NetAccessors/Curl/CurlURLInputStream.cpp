@@ -305,6 +305,7 @@ bool CurlURLInputStream::readMore(int *runningHandles)
 
         switch (msg->data.result)
         {
+            /*
         case CURLE_OK:
             // We completed successfully. runningHandles should have dropped to zero, so we'll bail out below...
             break;
@@ -330,9 +331,25 @@ bool CurlURLInputStream::readMore(int *runningHandles)
         case CURLE_RECV_ERROR:
             ThrowXMLwithMemMgr1(NetAccessorException, XMLExcepts::NetAcc_ReadSocket, fURLSource.getURLText(), fMemoryManager);
             break;
+            */
 
         default:
-            ThrowXMLwithMemMgr1(NetAccessorException, XMLExcepts::NetAcc_InternalError, fURLSource.getURLText(), fMemoryManager);
+            {
+              struct CurlError
+              {
+                  XMLCh* fErrorString;
+                  MemoryManager* fMemoryManager;
+                  CurlError(CURLMsg* msg, MemoryManager* fMemoryManager) : fErrorString(XMLString::transcode(curl_easy_strerror(msg->data.result))), fMemoryManager(fMemoryManager) {}
+                  ~CurlError() { XMLString::release(&fErrorString, fMemoryManager); }
+              };
+              CurlError curlErrorStr(msg, fMemoryManager);
+
+              XMLCh curlErrorNumberStr[128];
+              XMLString::binToText(msg->data.result, curlErrorNumberStr, 127, 10, fMemoryManager);
+
+              ThrowXMLwithMemMgr3(NetAccessorException, XMLExcepts::UTF8_FormatError/*UTF8_Invalid_3BytesSeq*//*NetAcc_InternalError*/, fURLSource.getURLText(), curlErrorNumberStr, curlErrorStr.fErrorString, fMemoryManager);
+            // ThrowXMLwithMemMgr1(NetAccessorException, XMLExcepts::NetAcc_InternalError, fURLSource.getURLText(), fMemoryManager);
+            }
             break;
         }
     }
