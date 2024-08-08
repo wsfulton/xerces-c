@@ -117,6 +117,9 @@ main(int argc, char** argv)
     
     // Get the URL
     char* url = argv[1];
+    std::cout << "NetAccessorTest (1) url=" << url << std::endl;
+    url[strlen(url)-2] = 0;
+    std::cout << "NetAccessorTest (2) url=" << url << std::endl;
     
     int r = 1;
 
